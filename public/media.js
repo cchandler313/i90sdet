@@ -1,7 +1,7 @@
 (()=>{
 "use strict";
 const $=id=>document.getElementById(id);
-const videoDialog=$("videos-dialog"),historyDialog=$("history-dialog");
+const videoDialog=$("videos-dialog"),historyDialog=$("history-dialog"),eventDialog=$("event-dialog");
 const parseYouTube=url=>{
  try{
   const u=new URL(url);
@@ -22,7 +22,7 @@ const node=(tag,attrs={},txt)=>{
  return e;
 };
 const formatDate=s=>{const d=new Date(s+"T12:00:00");return Number.isFinite(d.getTime())?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"Date not listed"};
-let videos=[],history=[],selection=0;
+let videos=[],history=[],events=[],selection=0;
 function setPlayer(index){
  selection=index;
  const v=videos[index];if(!v)return;
@@ -80,6 +80,61 @@ function renderVideoSection(){
  card.append(frame,heading,foot);
  grid.append(card);
 }
+function showEvent(index){
+ const item=events[index];
+ if(!item)return;
+ const body=$("event-dialog-body");body.replaceChildren();
+ const details=item.details||{};
+ const header=node("div",{class:"event-feature-info"});
+ header.append(node("div",{class:"event-eyebrow"},"INTERSTATE 90'S DETROIT · LIVE SHOW"));
+ header.append(node("h3",{class:"event-heading"},details.title||item.venue));
+ if(details.subtitle)header.append(node("p",{class:"event-subtitle"},details.subtitle));
+ const badges=node("div",{class:"event-badges"});
+ badges.append(node("span",{},"📅 "+formatDate(item.date)));
+ if(item.time)badges.append(node("span",{},"⏰ "+item.time));
+ if(item.admission)badges.append(node("span",{},"🎟 "+item.admission));
+ header.append(badges);
+ const layout=node("div",{class:"event-layout"});
+ const main=node("div",{class:"event-story"});
+ const photo=item.image||"";
+ if(photo){
+   let src="";
+   try{const u=new URL(photo);if(u.protocol==="https:")src=u.href}catch{}
+   if(src){
+     const figure=node("figure",{class:"event-poster"});
+     const photoURL=item.imageKey?"/event-media/"+encodeURIComponent(item.imageKey):src;
+     const img=node("img",{src:photoURL,alt:item.imageAlt||"Interstate 90's show announcement",loading:"lazy",decoding:"async"});
+     img.addEventListener("error",()=>{if(img.src!==src&&img.dataset.fallback!=="used"){img.dataset.fallback="used";img.src=src}});
+     figure.append(img,node("figcaption",{},"Original event artwork · Interstate 90's Detroit"));
+     main.append(figure);
+   }
+ }
+ const copy=node("div",{class:"event-copy"});
+ let paragraphs=Array.isArray(details.paragraphs)?details.paragraphs.filter(p=>typeof p==="string"&&p.trim()):[];
+ if(!paragraphs.length&&item.description)paragraphs=[item.description];
+ if(!paragraphs.length)paragraphs=["Join Interstate 90's Detroit for an evening of live music and all your favorite songs. Check the show details and come out!"];
+ for(const paragraph of paragraphs)copy.append(node("p",{},paragraph));
+ main.append(copy);
+ const sidebar=node("aside",{class:"event-sidebar"});
+ sidebar.append(node("span",{class:"event-aside-label"},"SHOW INFORMATION"));
+ const facts=Array.isArray(details.facts)&&details.facts.length?details.facts:[
+  ["DATE",formatDate(item.date)],["TIME",item.time||"Time to be announced"],["VENUE",item.venue],["LOCATION",item.location]
+ ];
+ for(const pair of facts){if(!Array.isArray(pair)||pair.length<2)continue;const row=node("div",{class:"event-fact"});row.append(node("small",{},String(pair[0])),node("strong",{},String(pair[1])));sidebar.append(row)}
+ const share=node("button",{type:"button",class:"event-share"},"COPY SHOW LINK ↗");
+ share.addEventListener("click",async()=>{
+  const link=location.origin+location.pathname+"#shows";
+  try{await navigator.clipboard.writeText(link);share.textContent="LINK COPIED ✓"}catch{share.textContent="Share the shows section: "+link}
+ });
+ sidebar.append(share);
+ if(item.ticketUrl){try{const url=new URL(item.ticketUrl);if(url.protocol==="https:")sidebar.append(node("a",{href:url.href,target:"_blank",rel:"noopener noreferrer",class:"event-ticket"},"TICKETS / EVENT PAGE ↗"))}catch{}}
+ layout.append(main,sidebar);body.append(header,layout);
+ eventDialog.showModal();
+}
+function bindEvents(data){
+ const date=new Date();const today=[date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),String(date.getDate()).padStart(2,"0")].join("-");
+ events=(data.upcomingShows||[]).filter(e=>/^\d{4}-\d{2}-\d{2}$/.test(e.date)&&e.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
+}
 function renderArchive(){
  const q=$("archive-search").value.toLowerCase().trim(),year=$("archive-year").value,root=$("archive-list");
  const items=history.filter(x=>(year==="all"||x.date.startsWith(year))&&(!q||(x.title+" "+x.summary+" "+x.date).toLowerCase().includes(q)));
@@ -109,20 +164,24 @@ async function load(){
   videos=(content.videos||[]).map(v=>({...v,...parseYouTube(v.url)})).filter(v=>v.id||v.playlist);
   // Individual clips are shown first; the full uploads playlist remains the last choice.
   videos=[...videos.filter(v=>v.id),...videos.filter(v=>v.playlist&&!v.id)];
-  renderVideoSection();setHistory(content);
+  renderVideoSection();setHistory(content);bindEvents(content);
  }catch(e){
   $("video-grid").replaceChildren(node("p",{},"Video library temporarily unavailable."));
   $("open-videos").disabled=true;
   $("open-history").textContent="HISTORY TEMPORARILY UNAVAILABLE";
  }
 }
+document.querySelector("#upcoming").addEventListener("click",event=>{
+ const button=event.target.closest("button[data-event-index]");
+ if(button)showEvent(Number(button.dataset.eventIndex));
+});
 $("open-videos").addEventListener("click",openVideo);
 $("open-history").addEventListener("click",()=>historyDialog.showModal());
 $("video-filter").addEventListener("input",e=>videoPicker(e.target.value));
 $("archive-search").addEventListener("input",renderArchive);
 $("archive-year").addEventListener("change",renderArchive);
 document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>$(b.dataset.close).close()));
-for(const dialog of [videoDialog,historyDialog]){
+for(const dialog of [videoDialog,historyDialog,eventDialog]){
  dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close()});
 }
 videoDialog.addEventListener("close",()=>$("vault-player").replaceChildren());
