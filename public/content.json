@@ -1,5 +1,13 @@
 {
-  "upcomingShows": [],
+  "upcomingShows": [
+    {
+      "date": "2026-10-24",
+      "venue": "Wild Willy's",
+      "location": "Romulus, Michigan",
+      "time": "9:00 PM – 1:00 AM",
+      "url": "https://interstate90sdet.com/interstate-90s-returns-to-wild-willys-saturday-october-24th/"
+    }
+  ],
   "recentShows": [
     {
       "date": "2026-10-17",
@@ -29,6 +37,258 @@
       "date": "2026-09-11",
       "venue": "Hamlin Pub — Van Dyke",
       "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-08-29",
+      "venue": "Hamlin Pub — Clinton Township",
+      "location": "Clinton Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2026-08-22",
+      "venue": "True North Summer Concert Series — Bay View Park Bandshell",
+      "location": "Alpena, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-08-15",
+      "venue": "Heels & Halyards — North Star Sail Club",
+      "location": "Michigan",
+      "time": "6:00 PM"
+    },
+    {
+      "date": "2026-07-25",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-07-17",
+      "venue": "Winner's Bar & Grill",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-07-12",
+      "venue": "Bruce Township Music in the Park",
+      "location": "Bruce Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-07-11",
+      "venue": "Kay Jay's Irish Pub",
+      "location": "Shelby Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-06-27",
+      "venue": "Bay-Rama Fishfly Festival",
+      "location": "Michigan",
+      "time": "2:00 PM – 6:00 PM"
+    },
+    {
+      "date": "2026-06-20",
+      "venue": "Cabana Blue",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-06-19",
+      "venue": "Hamlin Pub — Van Dyke",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-06-13",
+      "venue": "Lighthouse Tavern",
+      "location": "Michigan",
+      "time": "7:00 PM"
+    },
+    {
+      "date": "2026-05-30",
+      "venue": "Jack's Pub",
+      "location": "Clinton Township, Michigan",
+      "time": "8:00 PM"
+    },
+    {
+      "date": "2026-05-16",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2026-05-15",
+      "venue": "Hook",
+      "location": "St. Clair Shores, Michigan",
+      "time": "7:00 PM – 10:00 PM"
+    },
+    {
+      "date": "2026-04-25",
+      "venue": "Hamlin Pub — 90s Flashback Party",
+      "location": "Clinton Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-04-24",
+      "venue": "Hamlin Pub — Rochester",
+      "location": "Rochester, Michigan",
+      "time": "8:00 PM"
+    },
+    {
+      "date": "2026-04-18",
+      "venue": "Winner's Bar & Grill",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-04-11",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-04-10",
+      "venue": "Three Blind Mice Irish Pub",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-03-21",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2026-03-14",
+      "venue": "Wild Willy's",
+      "location": "Romulus, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-03-07",
+      "venue": "Jack's Pub",
+      "location": "Clinton Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-02-28",
+      "venue": "Wild Willy's",
+      "location": "Romulus, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2026-02-21",
+      "venue": "Hamlin Pub — Rochester",
+      "location": "Rochester, Michigan",
+      "time": "8:00 PM"
+    },
+    {
+      "date": "2026-02-20",
+      "venue": "Winner's Bar & Grill",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-02-13",
+      "venue": "Three Blind Mice Irish Pub",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-01-31",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2026-01-25",
+      "venue": "Freddy's — Benefit",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-01-10",
+      "venue": "Vigilante's M/C — Papa John's Benefit Party",
+      "location": "Detroit, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2025-12-20",
+      "venue": "Pub 1281 — Holiday Party",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2025-12-13",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2025-11-29",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2025-11-21",
+      "venue": "Hamlin Pub — Rochester",
+      "location": "Rochester, Michigan",
+      "time": ""
+    },
+    {
+      "date": "2025-10-31",
+      "venue": "Winner's Bar & Grill",
+      "location": "Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2025-10-17",
+      "venue": "Three Blind Mice Irish Pub",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2025-10-04",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2025-10-03",
+      "venue": "St. Clair Rockin' in the Plaza",
+      "location": "St. Clair, Michigan",
+      "time": "6:30 PM"
+    },
+    {
+      "date": "2025-09-20",
+      "venue": "The Outpost",
+      "location": "Port Huron, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2025-09-13",
+      "venue": "Hamlin Pub — Rochester",
+      "location": "Rochester, Michigan",
+      "time": "8:00 PM"
+    },
+    {
+      "date": "2025-09-06",
+      "venue": "Winner's Bar & Grill",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2025-08-23",
+      "venue": "Madison's Pub",
+      "location": "Mount Clemens, Michigan",
+      "time": "7:00 PM"
+    },
+    {
+      "date": "2025-08-16",
+      "venue": "True North Summer Concert Series",
+      "location": "Alpena, Michigan",
       "time": ""
     }
   ],
@@ -63,5 +323,6 @@
       "title": "Interstate 90's – Detroit | All YouTube Performances",
       "url": "https://www.youtube.com/channel/UC3GGfdmGmgiSFOwFRdApLfA"
     }
-  ]
+  ],
+  "archivePosts": []
 }
