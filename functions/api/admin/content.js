@@ -46,8 +46,9 @@ async function authorized(request,env){
   }
   if(!email)return "Verified Access login has no email identity. Use the Switch account link and sign in through One-Time PIN.";
   if(!allowlist.includes(email)){
-    const masked=email.replace(/^(.)([^@]*)(@.*)$/,(_m,first,middle,domain)=>first+"***"+domain);
-    return "Signed-in identity: "+masked+". This email is not one of the two approved editors. Use Switch account and sign in with the approved address.";
+    // This runs only after Cloudflare Access JWT signature verification.
+    // The signed-in visitor sees only their own verified email, never the allowlist.
+    return "Cloudflare verified your login as "+email+", but that address is not on the admin allowlist. Check which address received the OTP, or use Switch account.";
   }
   return null;
  }catch{return "Unable to validate Cloudflare Access token. Check Worker settings."}
