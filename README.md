@@ -7,8 +7,8 @@ Cloudflare Pages static site. No build system or WordPress needed.
 Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git → select `cchandler313/i90sdet` → `main` branch.
 
 - Framework preset: None
-- Build command: leave blank
-- Build output directory: `/` (repository root)
+- Build command: `exit 0` (recommended for static HTML with Pages Functions)
+- Build output directory: `.` (repository root)
 
 Test the generated `*.pages.dev` preview before attaching the production domain `interstate90sdet.com`.
 
@@ -57,3 +57,7 @@ The admin UI is at `/admin/`, and a Cloudflare Pages Function at `/api/admin/con
 **Security notes:** The API fails closed if any required variable or Access JWT is missing. Protect BOTH the dashboard and the API paths with Access policies. A copied or guessed dashboard URL alone does not grant publishing rights. Do not use a wildcard Allow Everyone policy. A GitHub token can be rotated/revoked independently. Cloudflare Access identity must be validated before publishing; this server-side code performs signature verification as defense in depth.
 
 The dashboard is a basic CMS, not a full image upload or blog system. `content.json` is intentionally public because the site needs it for rendering. The admin includes conflict detection using the current GitHub file SHA; reload if a concurrent editor changes the file.
+
+## Diagnosing a 404 from `/api/admin/content`
+
+Open `/api/health` on the **same** pages.dev hostname. It should return JSON containing `\"ok\":true`. If it also returns 404, Pages Functions were not deployed: confirm the latest `main` commit was deployed using **Git integration** (not dashboard drag-and-drop), project root is repo root, build command `exit 0`, output directory `.`, and redeploy. If health succeeds while admin API is 404, check Cloudflare Access application rules and Functions logs. If the admin API returns 401 or 503, follow its error message: configure Access JWT verification variables and repository-scoped GitHub token as instructed above. Do not switch the client's domain until publishing is verified.
