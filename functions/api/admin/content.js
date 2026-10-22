@@ -38,7 +38,7 @@ function validate(data){
  for(const a of data.artists)if(!text(a,100))throw Error("Invalid artist");
 }
 function validHttps(s){try{return typeof s==="string"&&s.length<=600&&new URL(s).protocol==="https:"}catch{return false}}
-function validYoutube(s){try{const u=new URL(s);if(!["youtube.com","www.youtube.com","m.youtube.com","youtu.be","www.youtube-nocookie.com"].includes(u.hostname))return false;let id=u.hostname==="youtu.be"?u.pathname.slice(1):u.pathname.startsWith("/shorts/")?u.pathname.split("/")[2]:u.searchParams.get("v");return /^[a-zA-Z0-9_-]{11}$/.test(id||"")}catch{return false}}
+function validYoutube(s){try{const u=new URL(s);if(!["youtube.com","www.youtube.com","m.youtube.com","youtu.be","www.youtube-nocookie.com"].includes(u.hostname))return false;if((u.hostname==="youtube.com"||u.hostname==="www.youtube.com")&&/^\/channel\/UC[a-zA-Z0-9_-]{22}\/?$/.test(u.pathname))return true;let id=u.hostname==="youtu.be"?u.pathname.slice(1):u.pathname.startsWith("/shorts/")?u.pathname.split("/")[2]:u.searchParams.get("v");return /^[a-zA-Z0-9_-]{11}$/.test(id||"")}catch{return false}}
 export async function onRequest({request,env}){
  if(!await authorized(request,env))return fail("Unauthorized. Sign in through Cloudflare Access.",401);
  if(!env.GITHUB_TOKEN)return fail("Missing GITHUB_TOKEN secret.",503);
