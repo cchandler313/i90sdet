@@ -1,5 +1,5 @@
 const REPO="cchandler313/i90sdet", PATH="public/content.json";
-const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
+const json=(value,status=200)=>new Response(JSON.stringify({...value,revision:"auth-fix-20261022-b"}),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff","x-i90s-admin-revision":"auth-fix-20261022-b"}});
 const fail=(message,status)=>json({error:message},status);
 function base64urlDecode(s){let b=s.replace(/-/g,"+").replace(/_/g,"/");return Uint8Array.from(atob(b+"=".repeat((4-b.length%4)%4)),c=>c.charCodeAt(0))}
 async function authorized(request,env){
@@ -28,22 +28,26 @@ async function authorized(request,env){
   if(!await crypto.subtle.verify("RSASSA-PKCS1-v1_5",key,base64urlDecode(parts[2]),msg))return "Cloudflare Access signature validation failed.";
   // Cloudflare normally embeds the login email in the signed application JWT.
   // When an IdP omits it, ask the same verified Cloudflare Access issuer for the user identity.
+  const allowlist=["chandler313@gmail.com","schembrivicki@gmail.com"];
   let email=typeof claims.email==="string"?claims.email.trim().toLowerCase():"";
-  if(!email){
+  // Check the Cloudflare identity record as well when JWT email is absent or differs.
+  // Do not let a caller supply the email through query params, request headers, or form data.
+  if(!allowlist.includes(email)){
     try{
       const idResponse=await fetch(issuer+"/cdn-cgi/access/get-identity",{
-        headers:{"cookie":"CF_Authorization="+token,"accept":"application/json"}
+        headers:{"cookie":"CF_Authorization="+token,"accept":"application/json"},
+        redirect:"error"
       });
       if(idResponse.ok){
         const identity=await idResponse.json();
-        if(typeof identity.email==="string")email=identity.email.trim().toLowerCase();
+        if(typeof identity.email==="string"&&identity.email.trim())email=identity.email.trim().toLowerCase();
       }
     }catch{}
   }
-  if(!email)return "Cloudflare accepted the OTP, but the session has no email identity. Sign out of Access and log in with one-time PIN again.";
-  if(!["chandler313@gmail.com","schembrivicki@gmail.com"].includes(email)){
+  if(!email)return "Verified Access login has no email identity. Use the Switch account link and sign in through One-Time PIN.";
+  if(!allowlist.includes(email)){
     const masked=email.replace(/^(.)([^@]*)(@.*)$/,(_m,first,middle,domain)=>first+"***"+domain);
-    return "Cloudflare signed you in as "+masked+", not an approved band editor. Sign out of Access and log in with chandler313@gmail.com or schembrivicki@gmail.com.";
+    return "Signed-in identity: "+masked+". This email is not one of the two approved editors. Use Switch account and sign in with the approved address.";
   }
   return null;
  }catch{return "Unable to validate Cloudflare Access token. Check Worker settings."}
