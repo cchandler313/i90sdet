@@ -5,7 +5,6 @@ function base64urlDecode(s){let b=s.replace(/-/g,"+").replace(/_/g,"/");return U
 async function authorized(request,env){
  const domain=String(env.CF_ACCESS_TEAM_DOMAIN||"").trim().replace(/\/$/,"");
  const audience=String(env.CF_ACCESS_AUD||"").trim();
- if(!domain||!audience||!/^https:\/\/[a-z0-9.-]+$/i.test(domain))return "Access verifier settings missing: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD in Worker settings.";
  const cookie=request.headers.get("Cookie")||"";
  const token=request.headers.get("Cf-Access-Jwt-Assertion")||cookie.split(";").map(x=>x.trim()).find(x=>x.startsWith("CF_Authorization="))?.slice("CF_Authorization=".length);
  if(!token)return "No Cloudflare Access token reaches the API. Protect /api/admin/* in the Access application and sign in again.";
@@ -14,10 +13,15 @@ async function authorized(request,env){
   const header=JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0])));
   const claims=JSON.parse(new TextDecoder().decode(base64urlDecode(parts[1])));
   if(header.alg!=="RS256"||!header.kid)return "Invalid Access token signing method.";
-  if(!Array.isArray(claims.aud)||!claims.aud.includes(audience))return "Access application audience mismatch. Check CF_ACCESS_AUD matches the API-protecting application.";
-  if(claims.iss!==domain)return "Access team domain mismatch. Check CF_ACCESS_TEAM_DOMAIN.";
+  if(!Array.isArray(claims.aud)||!claims.aud.length||claims.aud.some(a=>typeof a!=="string"||!a))return "Invalid Access token audience.";
+  // Access team hostname can be derived from the signed token when no explicit team is configured.
+  // An explicit team and AUD still give stronger app-specific binding when provided.
+  const issuer=claims.iss;
+  if(typeof issuer!=="string"||!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/i.test(issuer))return "Unrecognized Cloudflare Access issuer.";
+  if(domain&&domain!==issuer)return "Access team domain mismatch.";
+  if(audience&&!claims.aud.includes(audience))return "Access application audience mismatch.";
   if(typeof claims.exp!=="number"||claims.exp<=Date.now()/1000||typeof claims.nbf==="number"&&claims.nbf>Date.now()/1000)return "Cloudflare Access session expired. Sign in again.";
-  const response=await fetch(domain+"/cdn-cgi/access/certs");if(!response.ok)return "Cannot retrieve Access verification keys. Check the team domain setting.";
+  const response=await fetch(issuer+"/cdn-cgi/access/certs");if(!response.ok)return "Cannot retrieve Access verification keys. Check the team domain setting.";
   const keys=await response.json();const jwk=keys.keys?.find(k=>k.kid===header.kid&&k.kty==="RSA"&&(!k.alg||k.alg==="RS256"));if(!jwk)return "Access signing key not recognized.";
   const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
   const msg=new TextEncoder().encode(parts[0]+"."+parts[1]);
