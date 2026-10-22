@@ -28,7 +28,7 @@ async function authorized(request,env){
   if(!await crypto.subtle.verify("RSASSA-PKCS1-v1_5",key,base64urlDecode(parts[2]),msg))return "Cloudflare Access signature validation failed.";
   // Cloudflare normally embeds the login email in the signed application JWT.
   // When an IdP omits it, ask the same verified Cloudflare Access issuer for the user identity.
-  const allowlist=["chandler313@gmail.com","schembrivicki@gmail.com"];
+  const allowlist=["cchandler313@gmail.com","schembrivicki@gmail.com"];
   let email=typeof claims.email==="string"?claims.email.trim().toLowerCase():"";
   // Check the Cloudflare identity record as well when JWT email is absent or differs.
   // Do not let a caller supply the email through query params, request headers, or form data.
