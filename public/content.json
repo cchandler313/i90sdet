@@ -5,7 +5,38 @@
       "venue": "Wild Willy's",
       "location": "Romulus, Michigan",
       "time": "9:00 PM – 1:00 AM",
-      "url": "https://interstate90sdet.com/interstate-90s-returns-to-wild-willys-saturday-october-24th/"
+      "sourceUrl": "https://interstate90sdet.com/interstate-90s-returns-to-wild-willys-saturday-october-24th/",
+      "description": "Interstate 90's returns to Wild Willy's in Romulus for a Saturday night of 80s and 90s rock, alternative, country favorites, big sing-alongs and live music. Bring your friends and make a night of it — there's no cover charge.",
+      "admission": "No cover",
+      "image": "https://interstate90sdet.com/wp-content/uploads/2026/10/Untitled-January-20-2026-at-22.06.45-scaled.png",
+      "imageAlt": "Interstate 90's Detroit promotional event image from the original Wild Willy's announcement",
+      "details": {
+        "title": "Interstate 90's Returns to Wild Willy's",
+        "subtitle": "Live in Romulus · Saturday, October 24",
+        "paragraphs": [
+          "Romulus, Interstate 90's is coming back to Wild Willy's for another night of music, singing along with your favorite songs, and good times.",
+          "Expect 80s and 90s rock, alternative, country and more — including the songs you've loved for years and some you haven't heard in ages.",
+          "Round up your friends and make Saturday night a live music night. Come ready to sing, dance and enjoy the show."
+        ],
+        "facts": [
+          [
+            "Date",
+            "Saturday, October 24, 2026"
+          ],
+          [
+            "Music",
+            "9 PM – 1 AM"
+          ],
+          [
+            "Venue",
+            "Wild Willy's · Romulus, Michigan"
+          ],
+          [
+            "Admission",
+            "No cover"
+          ]
+        ]
+      }
     }
   ],
   "recentShows": [
