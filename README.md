@@ -17,10 +17,9 @@ After deployment, visit `https://i90sdet.cchandler313.workers.dev/api/health`. E
 
 ## Protected band admin publishing
 
-Admin path: `/admin/`. Protect both `/admin/*` and `/api/admin/*` with Cloudflare Zero Trust Access applications and allowlisted editor emails. The API independently verifies Access JWT signatures. Configure the **Worker** (not Pages) encrypted secrets:
+Admin path: `/admin/`. Protect both `/admin/*` and `/api/admin/*` with Cloudflare Zero Trust Access applications and allowlisted editor emails. The API independently verifies Access JWT signatures. Configure the **Worker** (not Pages) publishing secret:
 - `GITHUB_TOKEN`: fine-grained GitHub token with repository `cchandler313/i90sdet` Contents read/write only.
-- `CF_ACCESS_TEAM_DOMAIN`: `https://YOUR-TEAM.cloudflareaccess.com`.
-- `CF_ACCESS_AUD`: Access application audience tag for the `/api/admin/*` application.
+- Optional extra security: `CF_ACCESS_TEAM_DOMAIN` (`https://YOUR-TEAM.cloudflareaccess.com`) and `CF_ACCESS_AUD` (the API Access application audience). Without these, the Worker verifies the signed Cloudflare Access JWT using the Cloudflare issuer from the token and restricts verified identity to the two approved email addresses.
 
 The admin writes to `public/content.json` on the GitHub `main` branch, which must trigger a new Git-connected Worker deployment. Never store secrets in `public/`, GitHub, or the frontend.
 
@@ -29,3 +28,5 @@ The admin writes to `public/content.json` on the GitHub `main` branch, which mus
 Website show dates and videos are read from `public/content.json`. The `content.json` copy at repo root is an obsolete Pages-era file; do not edit it.
 
 **Before switching the client's production domain**, confirm health responds, admin data loads, add/publish a test show, see it on the public preview, remove it, and verify videos render. Until then leave WordPress live.
+
+**OTP setup:** The publishing API no longer requires manually entering `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD`; however, protecting **both** `/admin/*` and `/api/admin/*` with the band's Cloudflare Access OTP application remains essential. Set `GITHUB_TOKEN` as an encrypted Worker secret before attempting to load or publish content. For stronger isolation to one specific Access application, optionally supply the team domain and AUD values.
