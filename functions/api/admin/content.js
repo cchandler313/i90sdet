@@ -5,20 +5,26 @@ function base64urlDecode(s){let b=s.replace(/-/g,"+").replace(/_/g,"/");return U
 async function authorized(request,env){
  const domain=String(env.CF_ACCESS_TEAM_DOMAIN||"").trim().replace(/\/$/,"");
  const audience=String(env.CF_ACCESS_AUD||"").trim();
- if(!domain||!audience||!/^https:\/\/[a-z0-9.-]+$/i.test(domain))return false;
- const token=request.headers.get("Cf-Access-Jwt-Assertion");
- if(!token)return false;
+ if(!domain||!audience||!/^https:\/\/[a-z0-9.-]+$/i.test(domain))return "Access verifier settings missing: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD in Worker settings.";
+ const cookie=request.headers.get("Cookie")||"";
+ const token=request.headers.get("Cf-Access-Jwt-Assertion")||cookie.split(";").map(x=>x.trim()).find(x=>x.startsWith("CF_Authorization="))?.slice("CF_Authorization=".length);
+ if(!token)return "No Cloudflare Access token reaches the API. Protect /api/admin/* in the Access application and sign in again.";
  try{
-  const parts=token.split(".");if(parts.length!==3)return false;
+  const parts=token.split(".");if(parts.length!==3)return "Cloudflare Access token is malformed.";
   const header=JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0])));
   const claims=JSON.parse(new TextDecoder().decode(base64urlDecode(parts[1])));
-  if(header.alg!=="RS256"||!header.kid||!Array.isArray(claims.aud)||!claims.aud.includes(audience)||claims.iss!==domain||typeof claims.exp!=="number"||claims.exp<=Date.now()/1000||typeof claims.nbf==="number"&&claims.nbf>Date.now()/1000||!claims.email||!["chandler313@gmail.com","schembrivicki@gmail.com"].includes(String(claims.email).toLowerCase()))return false;
-  const response=await fetch(domain+"/cdn-cgi/access/certs");if(!response.ok)return false;
-  const keys=await response.json();const jwk=keys.keys?.find(k=>k.kid===header.kid&&k.kty==="RSA"&&(!k.alg||k.alg==="RS256"));if(!jwk)return false;
+  if(header.alg!=="RS256"||!header.kid)return "Invalid Access token signing method.";
+  if(!Array.isArray(claims.aud)||!claims.aud.includes(audience))return "Access application audience mismatch. Check CF_ACCESS_AUD matches the API-protecting application.";
+  if(claims.iss!==domain)return "Access team domain mismatch. Check CF_ACCESS_TEAM_DOMAIN.";
+  if(typeof claims.exp!=="number"||claims.exp<=Date.now()/1000||typeof claims.nbf==="number"&&claims.nbf>Date.now()/1000)return "Cloudflare Access session expired. Sign in again.";
+  const response=await fetch(domain+"/cdn-cgi/access/certs");if(!response.ok)return "Cannot retrieve Access verification keys. Check the team domain setting.";
+  const keys=await response.json();const jwk=keys.keys?.find(k=>k.kid===header.kid&&k.kty==="RSA"&&(!k.alg||k.alg==="RS256"));if(!jwk)return "Access signing key not recognized.";
   const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
   const msg=new TextEncoder().encode(parts[0]+"."+parts[1]);
-  return await crypto.subtle.verify("RSASSA-PKCS1-v1_5",key,base64urlDecode(parts[2]),msg);
- }catch{return false}
+  if(!await crypto.subtle.verify("RSASSA-PKCS1-v1_5",key,base64urlDecode(parts[2]),msg))return "Cloudflare Access signature validation failed.";
+  if(!["chandler313@gmail.com","schembrivicki@gmail.com"].includes(String(claims.email||"").toLowerCase()))return "Your signed-in email is not approved as a band editor.";
+  return null;
+ }catch{return "Unable to validate Cloudflare Access token. Check Worker settings."}
 }
 async function github(env,method="GET",body,sha){
  if(!env.GITHUB_TOKEN)throw Error("GitHub token is not configured");
@@ -40,7 +46,8 @@ function validate(data){
 function validHttps(s){try{return typeof s==="string"&&s.length<=600&&new URL(s).protocol==="https:"}catch{return false}}
 function validYoutube(s){try{const u=new URL(s);if(!["youtube.com","www.youtube.com","m.youtube.com","youtu.be","www.youtube-nocookie.com"].includes(u.hostname))return false;if((u.hostname==="youtube.com"||u.hostname==="www.youtube.com")&&/^\/channel\/UC[a-zA-Z0-9_-]{22}\/?$/.test(u.pathname))return true;let id=u.hostname==="youtu.be"?u.pathname.slice(1):u.pathname.startsWith("/shorts/")?u.pathname.split("/")[2]:u.searchParams.get("v");return /^[a-zA-Z0-9_-]{11}$/.test(id||"")}catch{return false}}
 export async function onRequest({request,env}){
- if(!await authorized(request,env))return fail("Unauthorized. Sign in through Cloudflare Access.",401);
+ const authError=await authorized(request,env);if(authError)return fail(authError,401);
+ if(request.method==="PUT"&&request.headers.get("Origin")!==new URL(request.url).origin)return fail("Publishing must originate from the band admin website.",403);
  if(!env.GITHUB_TOKEN)return fail("Missing GITHUB_TOKEN secret.",503);
  try{
  if(request.method==="GET"){
