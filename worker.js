@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { onRequest as contentHandler } from "./functions/api/admin/content.js";
+import { onRequest as importHandler } from "./functions/api/admin/import.js";
 
 export class BandContent extends DurableObject {
   getSnapshot(){
@@ -8,10 +9,43 @@ export class BandContent extends DurableObject {
   initialize(data){
     let current=this.ctx.storage.kv.get("content");
     if(!current){
-      current={sha:"initial",data};
+      current={sha:crypto.randomUUID(),data,seedTag:"history-20261022-v2"};
       this.ctx.storage.kv.put("content",current);
     }
     return current;
+  }
+  mergeSeed(seed){
+    let current=this.ctx.storage.kv.get("content");
+    if(!current)return this.initialize(seed);
+    if(current.seedTag==="history-20261022-v2")return current;
+    const existing=structuredClone(current.data);
+    const uniqueEvents=(first,second)=>{
+      const m=new Map();
+      for(const event of [...first,...second]){
+        if(!event||!event.date||!event.venue)continue;
+        const key=event.date+"|"+event.venue.toLowerCase().replace(/[^a-z0-9]/g,"");
+        if(!m.has(key))m.set(key,event);
+      }
+      return [...m.values()].sort((a,b)=>b.date.localeCompare(a.date));
+    };
+    existing.upcomingShows=uniqueEvents(existing.upcomingShows||[],seed.upcomingShows||[]);
+    existing.recentShows=uniqueEvents(existing.recentShows||[],seed.recentShows||[]);
+    existing.archivePosts=existing.archivePosts||[];
+    current={...current,sha:crypto.randomUUID(),data:existing,seedTag:"history-20261022-v2"};
+    this.ctx.storage.kv.put("content",current);
+    return current;
+  }
+  importArchive(posts){
+    const current=this.ctx.storage.kv.get("content");
+    if(!current)return {error:"Content needs initial loading before import."};
+    const data=structuredClone(current.data);
+    const original=data.archivePosts||[];
+    const keys=new Set(original.map(p=>p.url));
+    const filtered=posts.filter(p=>p&&p.url&&!keys.has(p.url)&&keys.add(p.url));
+    data.archivePosts=[...original,...filtered].sort((a,b)=>b.published.localeCompare(a.published));
+    const next={...current,sha:crypto.randomUUID(),data,archiveImportAt:new Date().toISOString()};
+    this.ctx.storage.kv.put("content",next);
+    return {imported:filtered.length,total:data.archivePosts.length,sha:next.sha};
   }
   save(expectedSha,data){
     const current=this.ctx.storage.kv.get("content");
@@ -27,15 +61,19 @@ export default {
  async fetch(request,env,ctx){
    const url=new URL(request.url),path=url.pathname;
    if(path==="/api/health"){
-     return request.method==="GET"?respond({ok:true,service:"i90sdet-worker",revision:"storage-v1",storage:env.BAND_CONTENT?"available":"binding-missing"}):respond({error:"Method not allowed"},405);
+     return request.method==="GET"?respond({ok:true,service:"i90sdet-worker",revision:"history-v2",storage:env.BAND_CONTENT?"available":"binding-missing"}):respond({error:"Method not allowed"},405);
    }
    if(path==="/api/admin/content")return contentHandler({request,env,ctx});
+   if(path==="/api/admin/import")return importHandler({request,env,ctx});
    if(path.startsWith("/api/"))return respond({error:"API route not found"},404);
    if(path==="/content.json"){
      if(request.method!=="GET"&&request.method!=="HEAD")return respond({error:"Method not allowed"},405);
      if(!env.BAND_CONTENT)return respond({error:"Site data store unavailable"},503);
      try{
-       const saved=await env.BAND_CONTENT.getByName("interstate90s-content").getSnapshot();
+       const seedResponse=await env.ASSETS.fetch(new Request(new URL("/content.json",request.url)));
+       const seed=seedResponse.ok?await seedResponse.json():null;
+       const store=env.BAND_CONTENT.getByName("interstate90s-content");
+       const saved=seed?await store.mergeSeed(seed):await store.getSnapshot();
        if(saved)return request.method==="HEAD"?new Response(null,{headers:{"content-type":"application/json","cache-control":"no-store"}}):respond(saved.data);
      }catch{return respond({error:"Site data store temporarily unavailable"},503)}
      const fallback=await env.ASSETS.fetch(request);
