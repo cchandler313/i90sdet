@@ -31,7 +31,7 @@ function setPlayer(index){
  frame.append(node("iframe",{src,title:v.title||"Band performance",loading:"lazy",allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share",allowfullscreen:"",referrerpolicy:"strict-origin-when-cross-origin"}));
  $("vault-nowplaying").textContent=v.title||"Live with Interstate 90's";
  $("vault-youtube").href=v.playlist?"https://www.youtube.com/playlist?list="+v.playlist:"https://www.youtube.com/watch?v="+v.id;
- document.querySelectorAll(".vault-choice").forEach((e,i)=>e.setAttribute("aria-current",String(i===index)));
+ document.querySelectorAll(".vault-choice").forEach(e=>e.setAttribute("aria-current",String(Number(e.dataset.index)===index)));
 }
 function videoPicker(query=""){
  const list=$("vault-video-list");list.replaceChildren();
@@ -40,7 +40,7 @@ function videoPicker(query=""){
   const v=videos[i];
   if(query&&!v.title.toLowerCase().includes(query.toLowerCase())&&!v.playlist)continue;
   matches++;
-  const button=node("button",{type:"button",class:"vault-choice","aria-current":String(i===selection)});
+  const button=node("button",{type:"button",class:"vault-choice","data-index":String(i),"aria-current":String(i===selection)});
   if(v.playlist)button.append(node("span",{class:"playlist-graphic"},"ALL"));
   else button.append(node("img",{src:"https://i.ytimg.com/vi/"+v.id+"/mqdefault.jpg",alt:"",loading:"lazy"}));
   const label=node("span");label.append(node("strong",{},v.title),node("small",{},v.playlist?"Browse every public upload using YouTube's playlist controls":"Play this featured video"));
@@ -49,25 +49,36 @@ function videoPicker(query=""){
  }
  if(!matches)list.append(node("p",{},"No featured clips match your search."));
 }
-function openVideo(){
+function openVideo(startIndex=0){
  if(!videos.length)return;
- videoPicker($("video-filter").value);
- setPlayer(0);
+ $("video-filter").value="";
+ videoPicker();
  videoDialog.showModal();
+ setPlayer(startIndex);
 }
 function renderVideoSection(){
  const grid=$("video-grid");grid.replaceChildren();
- if(!videos.length){grid.append(node("p",{},"New performance videos coming soon."));$("open-videos").disabled=true;return}
- const archive=videos.find(v=>v.playlist);
- const button=node("button",{type:"button",class:"video-teaser-action"});
- button.append(node("span",{},archive?"COMPLETE YOUTUBE ARCHIVE":"VIDEO COLLECTION"),node("strong",{},archive?"Browse all public uploads in one place":"Watch our live performance videos"));
- button.onclick=openVideo;grid.append(button);
- const individual=videos.find(v=>v.id);
- if(individual){
-  const clip=node("button",{type:"button",class:"video-teaser-action"});
-  clip.append(node("span",{},"FEATURED PERFORMANCE"),node("strong",{},individual.title));
-  clip.onclick=()=>{openVideo();setPlayer(videos.indexOf(individual))};grid.append(clip);
+ const open=$("open-videos");
+ if(!videos.length){
+   grid.append(node("p",{},"New performance videos coming soon."));
+   open.disabled=true;return;
  }
+ const clips=videos.filter(v=>v.id);
+ open.textContent="BROWSE ALL "+clips.length+" VIDEOS ↗";
+ const featured=videos.find(v=>v.id)||videos.find(v=>v.playlist);
+ if(!featured)return;
+ const card=node("article",{class:"latest-video-card"});
+ const heading=node("div",{class:"latest-video-heading"});
+ heading.append(node("span",{class:"latest-video-label"},"LATEST FEATURED VIDEO"),node("strong",{},featured.title||"Interstate 90's live"));
+ const frame=node("div",{class:"latest-video-embed"});
+ const src=featured.id?"https://www.youtube-nocookie.com/embed/"+featured.id:"https://www.youtube-nocookie.com/embed/videoseries?list="+featured.playlist;
+ frame.append(node("iframe",{src,title:"Featured video: "+(featured.title||"Interstate 90's live"),loading:"lazy",allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share",allowfullscreen:"",referrerpolicy:"strict-origin-when-cross-origin"}));
+ const foot=node("div",{class:"latest-video-footer"});
+ const all=node("button",{type:"button",class:"latest-video-all"},"WATCH ALL "+clips.length+" VIDEOS ↗");
+ all.addEventListener("click",()=>openVideo(videos.indexOf(featured)));
+ foot.append(all);
+ card.append(frame,heading,foot);
+ grid.append(card);
 }
 function renderArchive(){
  const q=$("archive-search").value.toLowerCase().trim(),year=$("archive-year").value,root=$("archive-list");
@@ -96,8 +107,8 @@ async function load(){
   const response=await fetch("/content.json",{cache:"no-store"});if(!response.ok)throw Error("Could not load site content");
   const content=await response.json();
   videos=(content.videos||[]).map(v=>({...v,...parseYouTube(v.url)})).filter(v=>v.id||v.playlist);
-  const playlistIndex=videos.findIndex(v=>v.playlist);
-  if(playlistIndex>0)videos.unshift(...videos.splice(playlistIndex,1));
+  // Individual clips are shown first; the full uploads playlist remains the last choice.
+  videos=[...videos.filter(v=>v.id),...videos.filter(v=>v.playlist&&!v.id)];
   renderVideoSection();setHistory(content);
  }catch(e){
   $("video-grid").replaceChildren(node("p",{},"Video library temporarily unavailable."));
