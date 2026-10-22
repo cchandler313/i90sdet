@@ -45,3 +45,13 @@ The original WordPress blog has more than twenty archive pages going back to at 
 On first deployment of this version, `public/content.json` seeds the **confirmed upcoming October 24, 2026 Wild Willy's show** and 47 verified past-show records. The Durable Object applies this versioned seed merge once without replacing editor-created entries.
 
 **Verification required:** The WordPress importer executes at runtime and has not been confirmed live from this chat. After deploying, visit the admin and confirm that the history import reports a nonzero archive count. If it fails, use the retry button; preserving the WordPress backup/export is recommended before changing the live domain. The full uploaded YouTube list comes from the channel's playlist, and the importer may recover more individual embeds if they exist in the legacy page HTML.
+
+## October 22 — Restored individual YouTube clips and latest-video feature
+
+The legacy WordPress `/videos/` page exposes eight individual YouTube embeds. Their verified video IDs and titles are now stored in `public/content.json` alongside the original full channel uploads playlist.
+
+The Video Vault displays those eight clips as separately selectable, searchable items; the complete YouTube uploads playlist remains available as an additional choice. The right side of the homepage Video Vault teaser now embeds the first individual video rather than showing a text-only archive card. At migration time that is **This Is How We Do It**, listed first on the WordPress Videos page. This is the latest featured clip in the WordPress ordering, not a claim of newest YouTube upload by timestamp.
+
+A versioned Durable Object seed merge (`video-import-20261022-v3`) imports the clips into live Cloudflare storage once without overwriting pre-existing editor-created entries. Admin-created videos added afterward appear first in the video gallery and homepage featured player. The migration marker is retained after subsequent admin saves, so deliberate deletions are not reversed.
+
+After deployment, refresh the homepage and open the Video Vault. Expect eight individually browsable legacy clips plus the complete uploads playlist. If an older Worker version is cached, check the latest deployed GitHub commit and refresh. The original WordPress domain remains unchanged.
