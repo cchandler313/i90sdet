@@ -1,0 +1,1 @@
+export function onRequestGet(){return new Response(JSON.stringify({ok:true,service:"i90sdet-pages-functions",message:"Cloudflare Pages Functions are running"}),{headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}})}
