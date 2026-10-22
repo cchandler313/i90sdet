@@ -81,6 +81,30 @@ async function attemptHTML(){
  }
  return [...found.values()];
 }
+async function findLegacyYouTubeVideos(){
+ try{
+  const response=await fetch(ORIGIN+"/videos/",{headers:{"accept":"text/html"}});
+  if(!response.ok)return [];
+  let html=await response.text();
+  html=html.replace(/&amp;/g,"&").replace(/\\u0026/gi,"&").replace(/\\\//g,"/");
+  const found=new Set(),videos=[];
+  const patterns=[
+   /(?:youtube\.com|youtube-nocookie\.com)\/embed\/([\w-]{11})/gi,
+   /youtu\.be\/([\w-]{11})/gi,
+   /youtube\.com\/watch\?[^"'<> ]*?v=([\w-]{11})/gi,
+   /youtube\.com\/shorts\/([\w-]{11})/gi
+  ];
+  for(const pattern of patterns){
+   for(const match of html.matchAll(pattern)){
+     const id=match[1];
+     if(found.has(id))continue;
+     found.add(id);
+     videos.push({title:"Classic Interstate 90's performance",url:"https://www.youtube.com/watch?v="+id});
+   }
+  }
+  return videos;
+ }catch{return []}
+}
 export async function onRequest({request,env}){
  const error=await authorized(request,env);
  if(error)return reply({error},401);
@@ -102,6 +126,8 @@ export async function onRequest({request,env}){
    if(!posts.length)return reply({error:"Could not retrieve any historical posts from the old WordPress site. Nothing was changed."},502);
    const result=await store.importArchive(posts);
    if(result.error)return reply({error:result.error},409);
-   return reply({ok:true,source:method,found:posts.length,imported:result.imported,total:result.total});
+   const legacyVideos=await findLegacyYouTubeVideos();
+   const clipResult=legacyVideos.length?await store.importLegacyVideos(legacyVideos):{imported:0};
+   return reply({ok:true,source:method,found:posts.length,imported:result.imported,total:result.total,videosImported:clipResult.imported||0});
  }catch{return reply({error:"History import failed. No existing events were deleted."},502)}
 }
