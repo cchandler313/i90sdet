@@ -1,4 +1,4 @@
-const REPO="cchandler313/i90sdet", PATH="content.json";
+const REPO="cchandler313/i90sdet", PATH="public/content.json";
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
 const fail=(message,status)=>json({error:message},status);
 function base64urlDecode(s){let b=s.replace(/-/g,"+").replace(/_/g,"/");return Uint8Array.from(atob(b+"=".repeat((4-b.length%4)%4)),c=>c.charCodeAt(0))}
