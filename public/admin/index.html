@@ -10,7 +10,7 @@
 let data=null,sha=null,dirty=false,autoImportAttempted=false,importing=false;
 const el=id=>document.getElementById(id), status=(message)=>el("status").textContent=message;
 const blankShow=()=>({date:"",venue:"",location:"",time:"",url:""});
-const input=(label,value,handler,type="text",placeholder="")=>{const wrap=document.createElement("label");wrap.textContent=label;const field=document.createElement(type==="textarea"?"textarea":"input");if(type==="textarea")field.rows=3;else field.type=type;field.value=value||"";field.placeholder=placeholder;field.addEventListener("input",()=>{handler(field.value);changed()});wrap.append(field);return wrap};
+const input=(label,value,handler,type="text",placeholder="")=>{const wrap=document.createElement("label");if(type==="textarea")wrap.className="wide";wrap.textContent=label;const field=document.createElement(type==="textarea"?"textarea":"input");if(type==="textarea")field.rows=3;else field.type=type;field.value=value||"";field.placeholder=placeholder;field.addEventListener("input",()=>{handler(field.value);changed()});wrap.append(field);return wrap};
 function changed(){dirty=true;el("changes").textContent="Unpublished changes";el("publish").disabled=false}
 function block(container,items,fields){
  el(container).replaceChildren();
