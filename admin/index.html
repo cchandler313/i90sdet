@@ -29,7 +29,7 @@ async function readApiResponse(response){
  const raw=await response.text();
  let parsed;
  try{parsed=JSON.parse(raw)}catch{
-  const html=/^\\s*<!doctype|^\\s*<html|<title|<body/i.test(raw);
+  const html=/^<!doctype|^<html|<title|<body/i.test(raw);
   if(response.status===401||response.status===403)throw Error("Access denied by Cloudflare. Confirm your email is allowed in the API Access application, not just the admin page.");
   if(response.status===404)throw Error("Publishing API not found (404). Confirm this is a Git-connected Cloudflare Pages deployment containing functions/api/admin/content.js.");
   if(response.status>=500)throw Error("The publishing API returned HTTP "+response.status+". Check Cloudflare Pages Functions logs and configuration.");
