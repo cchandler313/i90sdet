@@ -55,3 +55,17 @@ The Video Vault displays those eight clips as separately selectable, searchable 
 A versioned Durable Object seed merge (`video-import-20261022-v3`) imports the clips into live Cloudflare storage once without overwriting pre-existing editor-created entries. Admin-created videos added afterward appear first in the video gallery and homepage featured player. The migration marker is retained after subsequent admin saves, so deliberate deletions are not reversed.
 
 After deployment, refresh the homepage and open the Video Vault. Expect eight individually browsable legacy clips plus the complete uploads playlist. If an older Worker version is cached, check the latest deployed GitHub commit and refresh. The original WordPress domain remains unchanged.
+
+## Event Details popup (Oct 22, 2026)
+
+Upcoming events now display a **DETAILS** button that opens a first-party styled popup, not a link back to WordPress. The October 24 Wild Willy's show has migrated show facts (date, time, location, no cover), a polished description based on the original post, and its original WordPress image URL. The original source URL is retained as internal migration provenance (`sourceUrl`) but is not used as a public event link or ticket link.
+
+Editors can publish `description`, `image`, `admission`, and `ticketUrl` for future shows in the protected admin dashboard. The event modal renders sanitized text and HTTPS image URLs. For the migrated event, `details.paragraphs` retains the long-form post story in addition to the editable summary.
+
+### Preserving the original event artwork
+
+The first time the event popup loads the migrated photo, the public Worker route `/event-media/wild-willys-2026-10-24` attempts to fetch the image from the still-live WordPress origin and store binary chunks inside the Cloudflare Durable Object. Subsequent requests use the stored copy (response header `x-i90s-photo-cache: stored`). If the cache request fails while WordPress remains live, the popup falls back to the original image URL; however, **a successful cache fetch must be verified before moving the production domain**, otherwise the original image may not survive retirement of WordPress.
+
+To verify preservation: on the preview Worker domain, load `/event-media/wild-willys-2026-10-24` and confirm it displays an image, then check the response header `x-i90s-photo-cache: stored` on a subsequent request. Keep WordPress available until the image has been copied successfully.
+
+This revision uses the one-time seed tag `event-details-20261022-v4` to add the detailed event data to an already-populated Cloudflare content store without deleting editor-created content or videos.
