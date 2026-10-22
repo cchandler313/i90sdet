@@ -33,3 +33,15 @@ Open `/api/health`. A working release responds with `"revision":"storage-v1"` an
 Security: never disable Cloudflare Access protection on the admin and API paths. Content is edited only through the authenticated API. Public `/content.json` contains only published information.
 
 Backups: data now resides in Cloudflare's Durable Object storage, not GitHub. Arrange regular content exports before production launch if off-platform backups are required.
+
+## Video vault and historic event migration (Oct 22, 2026)
+
+The public homepage now has a **Browse All Videos** popup. It supports the official YouTube channel's complete uploads playlist (browse inside the embedded playlist), individual video clips, and individual YouTube embeds that can be recovered from the old WordPress videos page. Newly added individual clips in the admin show up in the vault.
+
+The **Full Show History** popup supports text search and year filtering. It displays the verified past performances stored in `recentShows` alongside archived WordPress announcements, which are labeled using their **publication date** rather than pretending it is the performance date.
+
+The original WordPress blog has more than twenty archive pages going back to at least 2020. On the first admin dashboard load without imported archive entries, the dashboard automatically calls `POST /api/admin/import`; admins can also use **Import / update history** to retry. The server tries the WordPress REST API, then the site's RSS pagination, then public blog archive HTML. It stores de-duplicated post titles, published dates, excerpts, and source URLs in the Cloudflare Durable Object. Existing admin changes are preserved.
+
+On first deployment of this version, `public/content.json` seeds the **confirmed upcoming October 24, 2026 Wild Willy's show** and 47 verified past-show records. The Durable Object applies this versioned seed merge once without replacing editor-created entries.
+
+**Verification required:** The WordPress importer executes at runtime and has not been confirmed live from this chat. After deploying, visit the admin and confirm that the history import reports a nonzero archive count. If it fails, use the retry button; preserving the WordPress backup/export is recommended before changing the live domain. The full uploaded YouTube list comes from the channel's playlist, and the importer may recover more individual embeds if they exist in the legacy page HTML.
