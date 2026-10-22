@@ -56,3 +56,29 @@
 .latest-video-footer{padding:0 20px 18px}
 .latest-video-all{font:800 12px 'DM Sans',Arial,sans-serif;text-decoration:underline;letter-spacing:1px;color:#f5ee30;border:0;background:none;padding:7px 0;cursor:pointer}
 .latest-video-all:hover{color:#fff}
+
+/* On-site event details: original WordPress announcement, redesigned for Interstate 90's. */
+.show-link{border:0;cursor:pointer;font-family:'DM Sans',sans-serif}
+.event-dialog{width:min(1040px,95vw);max-height:92vh}
+.event-dialog .dialog-head h2{font-size:clamp(37px,5vw,64px)}
+.event-dialog .dialog-head{align-items:center}
+.event-feature-info{padding:6px 0 28px}
+.event-eyebrow{font-size:11px;font-weight:900;letter-spacing:2px;color:#f5ee30}
+.event-heading{font-family:'Archivo Black',Impact,sans-serif;font-size:clamp(30px,4vw,57px);line-height:1.09;margin:13px 0;color:#fff;letter-spacing:-.035em}
+.event-subtitle{font-size:18px;color:#f5a2cb;margin:0 0 20px;font-weight:800}
+.event-badges{display:flex;gap:8px;flex-wrap:wrap}
+.event-badges span{background:#3b2b41;border:1px solid #785b7c;border-radius:4px;padding:9px 12px;font-weight:800;font-size:12px}
+.event-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(230px,.9fr);gap:28px}
+.event-story{min-width:0}
+.event-poster{margin:0 0 24px;background:#120f17;border:1px solid #654a68}
+.event-poster img{display:block;width:100%;height:auto;max-height:525px;object-fit:contain}
+.event-poster figcaption{font-size:11px;color:#cbbad0;padding:10px 13px}
+.event-copy p{color:#e6dce8;font-size:16px;line-height:1.75;max-width:67ch;margin:0 0 18px}
+.event-sidebar{background:#302337;border:1px solid #685172;padding:22px;align-self:start;position:sticky;top:0}
+.event-aside-label{color:#f5ee30;font-size:11px;font-weight:900;letter-spacing:2px}
+.event-fact{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid #75617b80;padding:18px 0}
+.event-fact small{color:#d8aec7;font-size:10px;font-weight:900;letter-spacing:1.4px}
+.event-fact strong{font-size:16px;line-height:1.4;color:#fff}
+.event-share,.event-ticket{display:block;text-align:center;padding:13px;margin-top:19px;background:#f5ee30;color:#15141b;border:0;font-size:12px;font-weight:900;cursor:pointer;width:100%}
+.event-ticket{background:#ff448a}
+@media(max-width:760px){.event-layout{grid-template-columns:1fr}.event-sidebar{position:static}.event-poster img{max-height:none}}
