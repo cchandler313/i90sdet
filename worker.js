@@ -9,7 +9,7 @@ export class BandContent extends DurableObject {
   initialize(data){
     let current=this.ctx.storage.kv.get("content");
     if(!current){
-      current={sha:crypto.randomUUID(),data,seedTag:"history-20261022-v2"};
+      current={sha:crypto.randomUUID(),data,seedTag:"video-import-20261022-v3"};
       this.ctx.storage.kv.put("content",current);
     }
     return current;
@@ -17,7 +17,7 @@ export class BandContent extends DurableObject {
   mergeSeed(seed){
     let current=this.ctx.storage.kv.get("content");
     if(!current)return this.initialize(seed);
-    if(current.seedTag==="history-20261022-v2")return current;
+    if(current.seedTag==="video-import-20261022-v3")return current;
     const existing=structuredClone(current.data);
     const uniqueEvents=(first,second)=>{
       const m=new Map();
@@ -31,7 +31,20 @@ export class BandContent extends DurableObject {
     existing.upcomingShows=uniqueEvents(existing.upcomingShows||[],seed.upcomingShows||[]);
     existing.recentShows=uniqueEvents(existing.recentShows||[],seed.recentShows||[]);
     existing.archivePosts=existing.archivePosts||[];
-    current={...current,sha:crypto.randomUUID(),data:existing,seedTag:"history-20261022-v2"};
+    // One-time, idempotent import of the eight verified WordPress clips.
+    // Keep any clips added by the band through the admin dashboard.
+    const videoKey=v=>{
+      try{const u=new URL(v.url);const id=u.searchParams.get("v")||u.pathname.match(/\/(?:shorts|embed)\/([\w-]{11})/)?.[1]||(u.hostname==="youtu.be"?u.pathname.slice(1):"");return id||u.href}
+      catch{return String(v?.url||"")}
+    };
+    const keys=new Set();
+    existing.videos=[...(seed.videos||[]),...(existing.videos||[])].filter(v=>{
+      if(!v||typeof v.url!=="string")return false;
+      const id=videoKey(v);if(keys.has(id))return false;
+      keys.add(id);return true;
+    });
+
+    current={...current,sha:crypto.randomUUID(),data:existing,seedTag:"video-import-20261022-v3"};
     this.ctx.storage.kv.put("content",current);
     return current;
   }
@@ -71,7 +84,7 @@ export class BandContent extends DurableObject {
     const current=this.ctx.storage.kv.get("content");
     if(!current)return {error:"Content has not been initialized. Reload the admin page."};
     if(current.sha!==expectedSha)return {error:"Another editor changed the site. Reload before publishing to avoid overwriting their changes."};
-    const next={sha:crypto.randomUUID(),data,updatedAt:Date.now()};
+    const next={...current,sha:crypto.randomUUID(),data,updatedAt:Date.now()};
     this.ctx.storage.kv.put("content",next);
     return {ok:true,sha:next.sha};
   }
