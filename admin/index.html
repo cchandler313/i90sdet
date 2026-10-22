@@ -25,9 +25,24 @@ function block(container,items,fields){
 const showFields=[["Date","date","date"],["Venue","venue","text","Venue name"],["City / location","location","text","Detroit, Michigan"],["Start time","time","text","8:00 PM"],["Ticket / event link (optional)","url","url","https://…"]];
 const videoFields=[["Video title","title","text","Live at…"],["YouTube URL","url","url","https://www.youtube.com/watch?v=…"]];
 function draw(){block("shows",data.upcomingShows,showFields);block("past",data.recentShows,showFields);block("videos",data.videos,videoFields)}
-async function load(){try{const r=await fetch("/api/admin/content",{cache:"no-store"});const payload=await r.json();if(!r.ok)throw Error(payload.error||"Unable to load data");data=payload.data;sha=payload.sha;draw();dirty=false;el("publish").disabled=true;el("changes").textContent="Everything published";status("Content loaded. Add an event or a YouTube video, then click Publish changes.")}catch(e){status(e.message);el("changes").textContent="Cannot load content"}}
+async function readApiResponse(response){
+ const raw=await response.text();
+ let parsed;
+ try{parsed=JSON.parse(raw)}catch{
+  const html=/^\\s*<!doctype|^\\s*<html|<title|<body/i.test(raw);
+  if(response.status===401||response.status===403)throw Error("Access denied by Cloudflare. Confirm your email is allowed in the API Access application, not just the admin page.");
+  if(response.status===404)throw Error("Publishing API not found (404). Confirm this is a Git-connected Cloudflare Pages deployment containing functions/api/admin/content.js.");
+  if(response.status>=500)throw Error("The publishing API returned HTTP "+response.status+". Check Cloudflare Pages Functions logs and configuration.");
+  if(html)throw Error("The publishing API returned an HTML page instead of JSON (HTTP "+response.status+"). Check Cloudflare Access on /api/admin/* and ensure Pages Functions are deployed.");
+  if(!raw.trim())throw Error("The publishing API returned an empty response (HTTP "+response.status+"). Check Pages Functions deployment and Cloudflare Access.");
+  throw Error("The publishing API returned invalid JSON (HTTP "+response.status+").");
+ }
+ if(!response.ok)throw Error(parsed.error||"Publishing API returned HTTP "+response.status);
+ return parsed;
+}
+async function load(){try{const r=await fetch("/api/admin/content",{cache:"no-store",headers:{"accept":"application/json"}});const payload=await readApiResponse(r);if(!payload||!payload.data||!payload.sha)throw Error("Publishing API response missing content or version.");data=payload.data;sha=payload.sha;draw();dirty=false;el("publish").disabled=true;el("changes").textContent="Everything published";status("Content loaded. Add an event or a YouTube video, then click Publish changes.")}catch(e){status(e.message);el("changes").textContent="Cannot load content"}}
 el("addShow").onclick=()=>{if(!data)return;data.upcomingShows.unshift(blankShow());changed();draw();el("shows").querySelector("input")?.focus()};
 el("addVideo").onclick=()=>{if(!data)return;data.videos.unshift({title:"",url:""});changed();draw();el("videos").querySelector("input")?.focus()};
-el("publish").onclick=async()=>{if(!data||!dirty)return;const btn=el("publish");btn.disabled=true;status("Publishing…");try{const r=await fetch("/api/admin/content",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({sha,data})});const result=await r.json();if(!r.ok)throw Error(result.error||"Could not publish");sha=result.sha;dirty=false;el("changes").textContent="Everything published";status("Published to GitHub! Cloudflare Pages will deploy the update shortly.")}catch(e){btn.disabled=false;status(e.message+". Your edits are still here; do not refresh.")}};
+el("publish").onclick=async()=>{if(!data||!dirty)return;const btn=el("publish");btn.disabled=true;status("Publishing…");try{const r=await fetch("/api/admin/content",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({sha,data})});const result=await readApiResponse(r);sha=result.sha;dirty=false;el("changes").textContent="Everything published";status("Published to GitHub! Cloudflare Pages will deploy the update shortly.")}catch(e){btn.disabled=false;status(e.message+". Your edits are still here; do not refresh.")}};
 window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});load();
 </script></body></html>
