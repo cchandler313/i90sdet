@@ -48,7 +48,7 @@ document.querySelector("#past").innerHTML=(data.recentShows||[]).map(e=>'<div cl
 document.querySelector("#artists").innerHTML=(data.artists||[]).map(a=>'<span class="artist">'+esc(a)+'</span>').join("");
 const channelPlaylist=url=>{try{const u=new URL(url);const m=u.pathname.match(/^\/channel\/(UC[a-zA-Z0-9_-]{22})\/?$/);return (u.hostname==="youtube.com"||u.hostname==="www.youtube.com")&&m?"UU"+m[1].slice(2):null}catch{return null}};
 const videos=(data.videos||[]).map(v=>({...v,id:youtubeId(v.url),playlist:channelPlaylist(v.url)})).filter(v=>v.id||v.playlist);
-document.querySelector("#video-grid").innerHTML=videos.length?videos.map(v=>'<article class="video-item"><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/'+(v.playlist?"embed/videoseries?list="+v.playlist:"embed/"+v.id)+'" title="'+esc(v.title||"Interstate 90s video")+'" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-caption">'+esc(v.title||"Live with Interstate 90’s")+'</div></article>').join(""):'<div class="video-empty">Videos coming soon. Follow the band for new live clips!</div>';
+// The full video browser is rendered by /media.js; avoid replacing its interactive teaser cards.
 }
 render();
 document.querySelector("#year").textContent=new Date().getFullYear();
