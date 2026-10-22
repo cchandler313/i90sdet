@@ -47,6 +47,26 @@ export class BandContent extends DurableObject {
     this.ctx.storage.kv.put("content",next);
     return {imported:filtered.length,total:data.archivePosts.length,sha:next.sha};
   }
+  importLegacyVideos(videos){
+    const current=this.ctx.storage.kv.get("content");
+    if(!current)return {error:"Content store is not ready."};
+    const data=structuredClone(current.data);
+    const existing=data.videos||[];
+    const ids=new Set(existing.map(v=>{try{const u=new URL(v.url);return u.searchParams.get("v")||u.pathname.split("/").pop()}catch{return ""}}));
+    let added=0;
+    for(const video of videos){
+      const id=video.url.match(/[?&]v=([\w-]{11})/i)?.[1];
+      if(!id||ids.has(id))continue;
+      existing.push({title:video.title||"Archived live performance",url:"https://www.youtube.com/watch?v="+id});
+      ids.add(id);added++;
+    }
+    if(added){
+      data.videos=existing;
+      const next={...current,sha:crypto.randomUUID(),data};
+      this.ctx.storage.kv.put("content",next);
+    }
+    return {imported:added,total:existing.length};
+  }
   save(expectedSha,data){
     const current=this.ctx.storage.kv.get("content");
     if(!current)return {error:"Content has not been initialized. Reload the admin page."};
