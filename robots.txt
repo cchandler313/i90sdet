@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://interstate90sdet.com/sitemap.xml
