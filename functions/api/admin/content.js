@@ -1,7 +1,7 @@
 const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
 const fail=(message,status)=>json({error:message},status);
 function base64urlDecode(s){let b=s.replace(/-/g,"+").replace(/_/g,"/");return Uint8Array.from(atob(b+"=".repeat((4-b.length%4)%4)),c=>c.charCodeAt(0))}
-async function authorized(request,env){
+export async function authorized(request,env){
  const domain=String(env.CF_ACCESS_TEAM_DOMAIN||"").trim().replace(/\/$/,"");
  const audience=String(env.CF_ACCESS_AUD||"").trim();
  const cookie=request.headers.get("Cookie")||"";
@@ -54,7 +54,8 @@ async function authorized(request,env){
 }
 function validate(data){
  if(!data||typeof data!=="object"||Array.isArray(data))throw Error("Invalid data");
- for(const field of ["upcomingShows","recentShows","artists","videos"])if(!Array.isArray(data[field])||data[field].length>300)throw Error("Invalid "+field);
+ for(const field of ["upcomingShows","recentShows","artists","videos"])if(!Array.isArray(data[field])||data[field].length>500)throw Error("Invalid "+field);
+ if(data.archivePosts!==undefined&&(!Array.isArray(data.archivePosts)||data.archivePosts.length>500))throw Error("Invalid archive");
  const text=(v,max=180)=>typeof v==="string"&&v.length<=max;
  for(const e of [...data.upcomingShows,...data.recentShows])if(!e||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!Number.isFinite(Date.parse(e.date+"T12:00:00Z"))||!text(e.venue)||!e.venue.trim()||!text(e.location)||!text(e.time,60)||!(e.url===undefined||e.url===""||validHttps(e.url)))throw Error("Invalid event fields");
  for(const v of data.videos)if(!v||!text(v.title)||!v.title.trim()||!text(v.url,600)||!validYoutube(v.url))throw Error("Invalid YouTube entry");
@@ -65,12 +66,9 @@ function validYoutube(s){try{const u=new URL(s);if(!["youtube.com","www.youtube.
 async function snapshot(env){
  if(!env.BAND_CONTENT||!env.ASSETS)throw Error("Cloudflare storage is not deployed. Check Durable Object binding and static assets.");
  const store=env.BAND_CONTENT.getByName("interstate90s-content");
- let current=await store.getSnapshot();
- if(!current){
-   const seed=await env.ASSETS.fetch(new Request("https://assets.local/content.json"));
-   if(!seed.ok)throw Error("The original content file could not be loaded.");
-   current=await store.initialize(await seed.json());
- }
+ const seed=await env.ASSETS.fetch(new Request("https://assets.local/content.json"));
+ if(!seed.ok)throw Error("The seed content file could not be loaded.");
+ const current=await store.mergeSeed(await seed.json());
  return {store,current};
 }
 export async function onRequest({request,env}){
@@ -84,9 +82,9 @@ export async function onRequest({request,env}){
      return json({sha:current.sha,data:current.data});
    }
    if(request.method==="PUT"){
-     if(Number(request.headers.get("content-length")||0)>100000)return fail("Content is too large.",413);
+     if(Number(request.headers.get("content-length")||0)>700000)return fail("Content is too large.",413);
      let raw=await request.text();
-     if(raw.length>100000)return fail("Content is too large.",413);
+     if(raw.length>700000)return fail("Content is too large.",413);
      let input;try{input=JSON.parse(raw)}catch{return fail("Invalid JSON payload.",400)}
      if(!input||typeof input.sha!=="string"||!input.sha||!input.data)return fail("Missing content version or data.",400);
      try{validate(input.data)}catch(e){return fail(e.message,400)}
