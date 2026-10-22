@@ -57,7 +57,15 @@ function validate(data){
  for(const field of ["upcomingShows","recentShows","artists","videos"])if(!Array.isArray(data[field])||data[field].length>500)throw Error("Invalid "+field);
  if(data.archivePosts!==undefined&&(!Array.isArray(data.archivePosts)||data.archivePosts.length>500))throw Error("Invalid archive");
  const text=(v,max=180)=>typeof v==="string"&&v.length<=max;
- for(const e of [...data.upcomingShows,...data.recentShows])if(!e||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!Number.isFinite(Date.parse(e.date+"T12:00:00Z"))||!text(e.venue)||!e.venue.trim()||!text(e.location)||!text(e.time,60)||!(e.url===undefined||e.url===""||validHttps(e.url)))throw Error("Invalid event fields");
+ for(const e of [...data.upcomingShows,...data.recentShows]){
+  if(!e||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!Number.isFinite(Date.parse(e.date+"T12:00:00Z"))||!text(e.venue)||!e.venue.trim()||!text(e.location)||!text(e.time,60)||!(e.url===undefined||e.url===""||validHttps(e.url)))throw Error("Invalid event fields");
+  if(e.description!==undefined&&!text(e.description,5000))throw Error("Event description is too long");
+  if(e.admission!==undefined&&!text(e.admission,120))throw Error("Invalid admission");
+  if(e.image!==undefined&&e.image!==""&&!validHttps(e.image))throw Error("Event image URL must be HTTPS");
+  if(e.ticketUrl!==undefined&&e.ticketUrl!==""&&!validHttps(e.ticketUrl))throw Error("Ticket link must be HTTPS");
+  if(e.imageKey!==undefined&&(!text(e.imageKey,95)||!/^[a-z0-9-]+$/.test(e.imageKey)))throw Error("Invalid image key");
+  if(e.details!==undefined&&(typeof e.details!=="object"||!Array.isArray(e.details.paragraphs)||e.details.paragraphs.length>25||e.details.paragraphs.some(p=>!text(p,5000))))throw Error("Invalid event details");
+ }
  for(const v of data.videos)if(!v||!text(v.title)||!v.title.trim()||!text(v.url,600)||!validYoutube(v.url))throw Error("Invalid YouTube entry");
  for(const a of data.artists)if(!text(a,100))throw Error("Invalid artist");
 }
