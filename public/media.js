@@ -111,8 +111,8 @@ function showEvent(index){
  }
  const copy=node("div",{class:"event-copy"});
  let paragraphs=Array.isArray(details.paragraphs)?details.paragraphs.filter(p=>typeof p==="string"&&p.trim()):[];
- if(!paragraphs.length&&item.description)paragraphs=[item.description];
- if(!paragraphs.length)paragraphs=["Join Interstate 90's Detroit for an evening of live music and all your favorite songs. Check the show details and come out!"];
+ if(item.description)copy.append(node("p",{class:"event-lede"},item.description));
+ if(!paragraphs.length&&!item.description)paragraphs=["Join Interstate 90's Detroit for an evening of live music and all your favorite songs. Check the show details and come out!"];
  for(const paragraph of paragraphs)copy.append(node("p",{},paragraph));
  main.append(copy);
  const sidebar=node("aside",{class:"event-sidebar"});
@@ -127,7 +127,8 @@ function showEvent(index){
   try{await navigator.clipboard.writeText(link);share.textContent="LINK COPIED ✓"}catch{share.textContent="Share the shows section: "+link}
  });
  sidebar.append(share);
- if(item.ticketUrl){try{const url=new URL(item.ticketUrl);if(url.protocol==="https:")sidebar.append(node("a",{href:url.href,target:"_blank",rel:"noopener noreferrer",class:"event-ticket"},"TICKETS / EVENT PAGE ↗"))}catch{}}
+ const ticket=item.ticketUrl||(typeof item.url==="string"&&!item.url.includes("interstate90sdet.com/")?item.url:"");
+ if(ticket){try{const url=new URL(ticket);if(url.protocol==="https:")sidebar.append(node("a",{href:url.href,target:"_blank",rel:"noopener noreferrer",class:"event-ticket"},"TICKETS / EVENT PAGE ↗"))}catch{}}
  layout.append(main,sidebar);body.append(header,layout);
  eventDialog.showModal();
 }
