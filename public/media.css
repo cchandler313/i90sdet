@@ -42,3 +42,17 @@
 #archive-count{color:#e7dbef;font-size:13px;font-weight:800}
 @media(max-width:800px){.video-feature,.vault-layout{grid-template-columns:1fr}.vault-video-list{max-height:220px}.archive-results{grid-template-columns:1fr}.vault-dialog{max-height:95vh}}
 @media(max-width:520px){.archive-filters{grid-template-columns:1fr}.video-feature{padding:20px}.vault-dialog{width:98vw;padding:15px}.dialog-head{gap:10px}.dialog-head h2{font-size:36px}}
+
+
+/* Featured live performance replaces the former text-only archive card. */
+.video-feature h3{color:#fff}
+.video-feature-copy h3{color:#fff;line-height:1.08}
+.latest-video-card{background:#120f19;border:1px solid #fc69a977;overflow:hidden;color:#fff;width:100%;box-shadow:7px 7px 0 #ff448a32}
+.latest-video-embed{width:100%;aspect-ratio:16/9;background:#08070b}
+.latest-video-embed iframe{width:100%;height:100%;border:0;display:block}
+.latest-video-heading{display:flex;flex-direction:column;gap:6px;padding:17px 20px 10px}
+.latest-video-heading strong{font-size:16px;line-height:1.35;color:#fff}
+.latest-video-label{font-size:11px;letter-spacing:1.8px;color:#ff8fbe;font-weight:900}
+.latest-video-footer{padding:0 20px 18px}
+.latest-video-all{font:800 12px 'DM Sans',Arial,sans-serif;text-decoration:underline;letter-spacing:1px;color:#f5ee30;border:0;background:none;padding:7px 0;cursor:pointer}
+.latest-video-all:hover{color:#fff}
