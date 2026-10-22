@@ -1,5 +1,4 @@
-const REPO="cchandler313/i90sdet", PATH="public/content.json";
-const json=(value,status=200)=>new Response(JSON.stringify({...value,revision:"auth-fix-20261022-b"}),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff","x-i90s-admin-revision":"auth-fix-20261022-b"}});
+const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
 const fail=(message,status)=>json({error:message},status);
 function base64urlDecode(s){let b=s.replace(/-/g,"+").replace(/_/g,"/");return Uint8Array.from(atob(b+"=".repeat((4-b.length%4)%4)),c=>c.charCodeAt(0))}
 async function authorized(request,env){
@@ -53,15 +52,6 @@ async function authorized(request,env){
   return null;
  }catch{return "Unable to validate Cloudflare Access token. Check Worker settings."}
 }
-async function github(env,method="GET",body,sha){
- if(!env.GITHUB_TOKEN)throw Error("GitHub token is not configured");
- const url="https://api.github.com/repos/"+REPO+"/contents/"+PATH;
- const r=await fetch(url,{method,headers:{"accept":"application/vnd.github+json","authorization":"Bearer "+env.GITHUB_TOKEN,"x-github-api-version":"2022-11-28","user-agent":"i90sdet-admin","content-type":"application/json"},body:body?JSON.stringify(body):undefined});
- if(!r.ok){if(r.status===409||r.status===422)throw new Error("Content changed since you opened it. Reload before publishing.");throw new Error("GitHub returned "+r.status)}
- return r.json();
-}
-const decode=s=>{let x=atob(s.replace(/\s/g,""));return new TextDecoder().decode(Uint8Array.from(x,c=>c.charCodeAt(0)))};
-const encode=s=>{const bytes=new TextEncoder().encode(s);let b="";for(let i=0;i<bytes.length;i++)b+=String.fromCharCode(bytes[i]);return btoa(b)};
 function validate(data){
  if(!data||typeof data!=="object"||Array.isArray(data))throw Error("Invalid data");
  for(const field of ["upcomingShows","recentShows","artists","videos"])if(!Array.isArray(data[field])||data[field].length>300)throw Error("Invalid "+field);
@@ -72,21 +62,39 @@ function validate(data){
 }
 function validHttps(s){try{return typeof s==="string"&&s.length<=600&&new URL(s).protocol==="https:"}catch{return false}}
 function validYoutube(s){try{const u=new URL(s);if(!["youtube.com","www.youtube.com","m.youtube.com","youtu.be","www.youtube-nocookie.com"].includes(u.hostname))return false;if((u.hostname==="youtube.com"||u.hostname==="www.youtube.com")&&/^\/channel\/UC[a-zA-Z0-9_-]{22}\/?$/.test(u.pathname))return true;let id=u.hostname==="youtu.be"?u.pathname.slice(1):u.pathname.startsWith("/shorts/")?u.pathname.split("/")[2]:u.searchParams.get("v");return /^[a-zA-Z0-9_-]{11}$/.test(id||"")}catch{return false}}
+async function snapshot(env){
+ if(!env.BAND_CONTENT||!env.ASSETS)throw Error("Cloudflare storage is not deployed. Check Durable Object binding and static assets.");
+ const store=env.BAND_CONTENT.getByName("interstate90s-content");
+ let current=await store.getSnapshot();
+ if(!current){
+   const seed=await env.ASSETS.fetch(new Request("https://assets.local/content.json"));
+   if(!seed.ok)throw Error("The original content file could not be loaded.");
+   current=await store.initialize(await seed.json());
+ }
+ return {store,current};
+}
 export async function onRequest({request,env}){
- const authError=await authorized(request,env);if(authError)return fail(authError,401);
- if(request.method==="PUT"&&request.headers.get("Origin")!==new URL(request.url).origin)return fail("Publishing must originate from the band admin website.",403);
- if(!env.GITHUB_TOKEN)return fail("Missing GITHUB_TOKEN secret.",503);
+ const authError=await authorized(request,env);
+ if(authError)return fail(authError,401);
+ const url=new URL(request.url);
+ if(request.method==="PUT"&&request.headers.get("Origin")!==url.origin)return fail("Publishing must originate from the band admin website.",403);
  try{
- if(request.method==="GET"){
-  const f=await github(env);return json({sha:f.sha,data:JSON.parse(decode(f.content))});
- }
- if(request.method==="PUT"){
-  if(Number(request.headers.get("content-length")||0)>100000)return fail("Payload too large",413);
-  let input=await request.json();if(!input||typeof input.sha!=="string"||!input.sha||!input.data)return fail("Missing version or content",400);
-  validate(input.data);
-  const f=await github(env,"PUT",{message:"Update shows and YouTube videos via band admin",content:encode(JSON.stringify(input.data,null,2)+"\n"),sha:input.sha,branch:"main"});
-  return json({ok:true,sha:f.content.sha,commit:f.commit.sha});
- }
- return fail("Method not allowed",405);
- }catch(e){return fail(e.message==="Content changed since you opened it. Reload before publishing."?e.message:"Publishing failed: "+e.message,e.message?.startsWith("Invalid")?400:409)}
+   if(request.method==="GET"){
+     const {current}=await snapshot(env);
+     return json({sha:current.sha,data:current.data});
+   }
+   if(request.method==="PUT"){
+     if(Number(request.headers.get("content-length")||0)>100000)return fail("Content is too large.",413);
+     let raw=await request.text();
+     if(raw.length>100000)return fail("Content is too large.",413);
+     let input;try{input=JSON.parse(raw)}catch{return fail("Invalid JSON payload.",400)}
+     if(!input||typeof input.sha!=="string"||!input.sha||!input.data)return fail("Missing content version or data.",400);
+     try{validate(input.data)}catch(e){return fail(e.message,400)}
+     const {store}=await snapshot(env);
+     const result=await store.save(input.sha,input.data);
+     if(result.error)return fail(result.error,409);
+     return json({ok:true,sha:result.sha});
+   }
+   return fail("Method not allowed.",405);
+ }catch(e){return fail("Content storage unavailable. Check Worker deployment and logs.",503)}
 }

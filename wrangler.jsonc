@@ -7,6 +7,23 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": [
+      "/api/*",
+      "/content.json"
+    ]
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BAND_CONTENT",
+        "class_name": "BandContent"
+      }
+    ]
+  },
+  "exports": {
+    "BandContent": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
   }
 }
