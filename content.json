@@ -1,0 +1,62 @@
+{
+  "upcomingShows": [],
+  "recentShows": [
+    {
+      "date": "2026-10-17",
+      "venue": "Hamlin Pub — Rochester",
+      "location": "Rochester, Michigan",
+      "time": "8:00 PM"
+    },
+    {
+      "date": "2026-10-08",
+      "venue": "Octopus' Beer Garden",
+      "location": "Michigan",
+      "time": ""
+    },
+    {
+      "date": "2026-09-19",
+      "venue": "WindJammer",
+      "location": "Harrison Township, Michigan",
+      "time": "9:00 PM"
+    },
+    {
+      "date": "2026-09-18",
+      "venue": "RiverBillies",
+      "location": "Gibraltar, Michigan",
+      "time": "8:00 PM"
+    },
+    {
+      "date": "2026-09-11",
+      "venue": "Hamlin Pub — Van Dyke",
+      "location": "Michigan",
+      "time": ""
+    }
+  ],
+  "artists": [
+    "Nirvana",
+    "Foo Fighters",
+    "Green Day",
+    "The Cranberries",
+    "Pearl Jam",
+    "Weezer",
+    "Blink-182",
+    "Alanis Morissette",
+    "Stone Temple Pilots",
+    "The Cure",
+    "Jimmy Eat World",
+    "Gin Blossoms",
+    "Bush",
+    "Collective Soul",
+    "The Offspring",
+    "Joan Jett",
+    "Lit",
+    "Live",
+    "The Black Keys",
+    "311",
+    "Cake",
+    "Fuel",
+    "Nine Inch Nails",
+    "Goo Goo Dolls"
+  ],
+  "videos": []
+}
