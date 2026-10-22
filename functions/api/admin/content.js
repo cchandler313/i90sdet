@@ -12,7 +12,7 @@ async function authorized(request,env){
   const parts=token.split(".");if(parts.length!==3)return false;
   const header=JSON.parse(new TextDecoder().decode(base64urlDecode(parts[0])));
   const claims=JSON.parse(new TextDecoder().decode(base64urlDecode(parts[1])));
-  if(header.alg!=="RS256"||!header.kid||!Array.isArray(claims.aud)||!claims.aud.includes(audience)||claims.iss!==domain||typeof claims.exp!=="number"||claims.exp<=Date.now()/1000||typeof claims.nbf==="number"&&claims.nbf>Date.now()/1000||!claims.email)return false;
+  if(header.alg!=="RS256"||!header.kid||!Array.isArray(claims.aud)||!claims.aud.includes(audience)||claims.iss!==domain||typeof claims.exp!=="number"||claims.exp<=Date.now()/1000||typeof claims.nbf==="number"&&claims.nbf>Date.now()/1000||!claims.email||!["chandler313@gmail.com","schembrivicki@gmail.com"].includes(String(claims.email).toLowerCase()))return false;
   const response=await fetch(domain+"/cdn-cgi/access/certs");if(!response.ok)return false;
   const keys=await response.json();const jwk=keys.keys?.find(k=>k.kid===header.kid&&k.kty==="RSA"&&(!k.alg||k.alg==="RS256"));if(!jwk)return false;
   const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);
