@@ -3,10 +3,11 @@
 </style></head><body><header><h1>INTERSTATE <span style="color:#f7e93e">90'S</span> / ADMIN</h1><div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px"><a style="color:#f7e93e" href="/">View website ↗</a><a style="color:#ff9fc3" href="/cdn-cgi/access/logout" title="Cloudflare Access signs you out of all protected apps">Switch account ↗</a></div></header><main><div id="status" role="status" aria-live="polite">Connecting to the publishing service…</div><p class="hint">Only authorized band editors should have access. Publishing saves changes directly to Cloudflare. No GitHub login or token needed.</p>
 <section><div class="toolbar"><h2>Upcoming events</h2><button id="addShow" type="button">+ Add event</button></div><div id="shows"></div></section>
 <section><div class="toolbar"><h2>YouTube videos</h2><button id="addVideo" type="button">+ Add video</button></div><div id="videos"></div><p class="hint">Paste a YouTube watch, Shorts, or youtu.be link. The website embeds it automatically.</p></section>
+<section><div class="toolbar"><h2>Imported WordPress history</h2><button type="button" id="importHistory" class="secondary">Import / update history</button></div><p id="historyStatus">The historic event archive is stored separately from upcoming shows. Dates labeled “posted” are WordPress publication dates.</p><p class="hint">The import merges posts without deleting dates or videos already saved here. It also includes older announcements going back several years.</p></section>
 <section><h2>Previously played shows</h2><p>Expired upcoming shows disappear from the public upcoming list automatically. Move an event here to preserve it in the “Recent Stops” section.</p><div id="past"></div></section>
 </main><footer><div class="foot-inner"><strong id="changes">Loading…</strong><button id="publish" disabled>Publish changes</button></div></footer>
 <script>
-let data=null,sha=null,dirty=false;
+let data=null,sha=null,dirty=false,autoImportAttempted=false,importing=false;
 const el=id=>document.getElementById(id), status=(message)=>el("status").textContent=message;
 const blankShow=()=>({date:"",venue:"",location:"",time:"",url:""});
 const input=(label,value,handler,type="text",placeholder="")=>{const wrap=document.createElement("label");wrap.textContent=label;const field=document.createElement("input");field.type=type;field.value=value||"";field.placeholder=placeholder;field.addEventListener("input",()=>{handler(field.value);changed()});wrap.append(field);return wrap};
@@ -40,7 +41,21 @@ async function readApiResponse(response){
  if(!response.ok)throw Error(parsed.error||"Publishing API returned HTTP "+response.status);
  return parsed;
 }
-async function load(){try{const r=await fetch("/api/admin/content",{cache:"no-store",headers:{"accept":"application/json"}});const payload=await readApiResponse(r);if(!payload||!payload.data||!payload.sha)throw Error("Publishing API response missing content or version.");data=payload.data;sha=payload.sha;draw();dirty=false;el("publish").disabled=true;el("changes").textContent="All changes saved";status("Content loaded. Add an event or a YouTube video, then click Publish changes.")}catch(e){status(e.message);el("changes").textContent="Cannot load content"}}
+async function load(){try{const r=await fetch("/api/admin/content",{cache:"no-store",headers:{"accept":"application/json"}});const payload=await readApiResponse(r);if(!payload||!payload.data||!payload.sha)throw Error("Publishing API response missing content or version.");data=payload.data;sha=payload.sha;draw();dirty=false;el("publish").disabled=true;el("changes").textContent="All changes saved";status("Content loaded. Add an event or a YouTube video, then click Publish changes.");el("historyStatus").textContent=(data.archivePosts?.length||0)+" WordPress archive posts saved.";if(!autoImportAttempted&&!(data.archivePosts?.length)){autoImportAttempted=true;importArchive(true)}}catch(e){status(e.message);el("changes").textContent="Cannot load content"}}
+async function importArchive(automatic=false){
+ if(importing)return;
+ if(dirty){if(!automatic)status("Please publish or discard your current edits before importing the archive.");return}
+ importing=true;const button=el("importHistory");button.disabled=true;
+ el("historyStatus").textContent="Importing history from the original WordPress site…";
+ try{
+  const response=await fetch("/api/admin/import",{method:"POST",headers:{"accept":"application/json"}});
+  const result=await readApiResponse(response);
+  el("historyStatus").textContent="Imported "+result.imported+" new records. "+result.total+" historical WordPress posts now saved ("+result.source+").";
+  await load();
+ }catch(e){el("historyStatus").textContent="Could not complete import: "+e.message+". The existing site content is safe. You can retry using the import button."}
+ finally{importing=false;button.disabled=false}
+}
+el("importHistory").onclick=()=>importArchive(false);
 el("addShow").onclick=()=>{if(!data)return;data.upcomingShows.unshift(blankShow());changed();draw();el("shows").querySelector("input")?.focus()};
 el("addVideo").onclick=()=>{if(!data)return;data.videos.unshift({title:"",url:""});changed();draw();el("videos").querySelector("input")?.focus()};
 el("publish").onclick=async()=>{if(!data||!dirty)return;const btn=el("publish");btn.disabled=true;status("Publishing…");try{const r=await fetch("/api/admin/content",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({sha,data})});const result=await readApiResponse(r);sha=result.sha;dirty=false;el("changes").textContent="Everything published";status("Saved! Your updates are live on the website.")}catch(e){btn.disabled=false;status(e.message+". Your edits are still here; do not refresh.")}};
